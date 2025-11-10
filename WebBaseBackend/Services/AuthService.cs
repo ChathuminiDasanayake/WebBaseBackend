@@ -1,5 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +13,7 @@ namespace WebBaseBackend.Services
 {
     public class AuthService(UserDbContext context, IConfiguration configuration) : IAuthService
     {
-        public async Task<string?> LoginAsync(UserDto request)
+        public async Task<TokenResponseDto?> LoginAsync(UserDto request)
         {
             var user = await context.Users.FirstOrDefaultAsync(u => u.UserName == request.UserName);
 
@@ -26,9 +27,16 @@ namespace WebBaseBackend.Services
                 return null;
             }
 
-            string token = CreateToken(user);
+            return await CreateTokenResponse(user); 
+        }
 
-            return (token);
+        private async Task<TokenResponseDto> CreateTokenResponse(User? user)
+        {
+            return new TokenResponseDto
+            {
+                AccessToken = CreateToken(user),
+                RefreshToken = await GenerateAndSaveRefreshTokensAsync(user)
+            };
         }
 
         public  async Task<User?> RegisterAsync(UserDto request)
@@ -52,12 +60,57 @@ namespace WebBaseBackend.Services
             return (user);
         }
 
+        private string RefreshTokensGenerate() {
+
+            var randomNumber = new byte[32];
+            using var random = RandomNumberGenerator.Create();
+            random.GetBytes(randomNumber);
+            return Convert.ToBase64String(randomNumber);
+        }
+        private async Task<string> GenerateAndSaveRefreshTokensAsync(User user)
+        {
+            var refershToken = RefreshTokensGenerate();
+            user.RefreshToken = refershToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            await context.SaveChangesAsync();
+            return refershToken;
+        }
+
+        public async Task<TokenResponseDto?> RefreshTokensAsync(RefershTokenRequestDto request)
+        {
+            var user = await RefreshTokenValidateAsync(request.UserId, request.RefreshToken);
+            if (user is null)
+            { 
+            return null; 
+            }
+
+            return await CreateTokenResponse(user);
+
+
+        }
+
+        private async Task<User?> RefreshTokenValidateAsync(Guid userId, string refreshToken)
+        {
+            var user = await context.Users.FindAsync(userId);
+            if (user is null || (user.RefreshToken != refreshToken)
+                || (user.RefreshTokenExpiryTime <= DateTime.UtcNow))
+            {
+                return null;
+
+            }
+
+            return user;
+
+        }
+
         private string CreateToken(User user)
         {
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, user.UserName)
+                new Claim(ClaimTypes.Name, user.UserName),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Role, user.Role)
             };
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(configuration.GetValue<string>("AppSettings:Token")!)
@@ -74,5 +127,6 @@ namespace WebBaseBackend.Services
 
             return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
         }
+
     }
 }
