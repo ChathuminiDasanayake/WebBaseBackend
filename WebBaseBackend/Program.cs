@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
+using WebBaseBackend.Commands;
 using WebBaseBackend.Controllers;
 using WebBaseBackend.Data;
 using WebBaseBackend.Services;
@@ -17,6 +18,10 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<UserDbContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("BaseDatabase")));
+
+builder.Services.AddScoped<IPostRepository, PostService>();
+
+builder.Services.AddScoped<CreatePostHandler>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options => 
 {
