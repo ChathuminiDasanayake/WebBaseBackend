@@ -20,8 +20,11 @@ builder.Services.AddDbContext<UserDbContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("BaseDatabase")));
 
 builder.Services.AddScoped<IPostRepository, PostService>();
+builder.Services.AddScoped<ICommentRepository, CommentService>();
+builder.Services.AddScoped<ILikeRepository, LikeService>();
 
 builder.Services.AddScoped<CreatePostHandler>();
+builder.Services.AddScoped<AddCommentHandler>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options => 
 {

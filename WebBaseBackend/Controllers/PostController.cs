@@ -11,13 +11,17 @@ namespace WebBaseBackend.Controllers
     {
 
         private readonly CreatePostHandler _createPost;
+        private readonly AddCommentHandler _addComment;
+        private readonly AddLikeHandler _addLike;
         private readonly IPostRepository _posts;
 
         public PostController(CreatePostHandler createPost,
-                               IPostRepository posts)
+                               IPostRepository posts, AddCommentHandler addComment,
+                               ICommentRepository comments)
         {
             _createPost = createPost;
             _posts = posts;
+            _addComment = addComment;
         }
 
         [HttpPost]
@@ -32,6 +36,20 @@ namespace WebBaseBackend.Controllers
         {
             var post = await _posts.GetByPostIdAsync(id);
             return post == null ? NotFound() : Ok(post);
+        }
+
+        [HttpPost("{id}/comment")]
+        public async Task<IActionResult> AddComment(int id, [FromBody] CreateCommentCommand command)
+        {
+            await _addComment.Handle(id, command);
+            return Ok();
+        }
+
+        [HttpPost("{id}/like")]
+        public async Task<IActionResult> AddLike(int id, [FromBody] string userId)
+        {
+            await _addLike.Handle(id, userId);
+            return Ok();
         }
     }
 }
