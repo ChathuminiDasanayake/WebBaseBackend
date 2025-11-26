@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebBaseBackend.Commands;
 using WebBaseBackend.Services;
@@ -25,9 +26,11 @@ namespace WebBaseBackend.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> Create([FromBody] CreatePostCommand command)
         {
-            var id = await _createPost.Handle(command);
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var id = await _createPost.Handle(command,userId);
             return Ok(new { Id = id });
         }
 

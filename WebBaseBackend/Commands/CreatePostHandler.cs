@@ -12,9 +12,9 @@ namespace WebBaseBackend.Commands
             _postRepository = postRepository;
         }
 
-        public async Task<int> Handle(CreatePostCommand command)
+        public async Task<int> Handle(CreatePostCommand command, Guid UserId)
         {
-            var post = new Post { Content = command.Content };
+            var post = new Post { Content = command.Content, UserId = UserId };
             await _postRepository.AddPostAsync(post);
             return post.Id;
         }
