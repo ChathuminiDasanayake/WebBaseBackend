@@ -1,4 +1,6 @@
-﻿namespace WebBaseBackend.Entities
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace WebBaseBackend.Entities
 {
     public class User
     {

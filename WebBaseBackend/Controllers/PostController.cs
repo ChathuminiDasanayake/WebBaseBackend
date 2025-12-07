@@ -2,7 +2,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebBaseBackend.Commands;
+using WebBaseBackend.Entities;
 using WebBaseBackend.Services;
+using static WebBaseBackend.Enums.Enum;
 
 namespace WebBaseBackend.Controllers
 {
@@ -12,15 +14,17 @@ namespace WebBaseBackend.Controllers
     {
 
         private readonly CreatePostHandler _createPost;
+        private readonly UpdatePostHandler _updatePost;
         private readonly AddCommentHandler _addComment;
         private readonly AddLikeHandler _addLike;
         private readonly IPostRepository _posts;
 
-        public PostController(CreatePostHandler createPost,
-                               IPostRepository posts, AddCommentHandler addComment,
+        public PostController(CreatePostHandler createPost, UpdatePostHandler updatePost,
+        IPostRepository posts, AddCommentHandler addComment,
                                ICommentRepository comments)
         {
             _createPost = createPost;
+            _updatePost = updatePost;
             _posts = posts;
             _addComment = addComment;
         }
@@ -30,8 +34,18 @@ namespace WebBaseBackend.Controllers
         public async Task<IActionResult> Create([FromBody] CreatePostCommand command)
         {
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            var id = await _createPost.Handle(command,userId);
+            var status = PostStatus.Active;
+            var id = await _createPost.Handle(command,userId, status);
             return Ok(new { Id = id });
+        }
+
+        [HttpPut("{postId}")]
+        [Authorize]
+        public async Task<IActionResult> Update(int postId, [FromBody] UpdatePostCommand command)
+        {
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var result=await _updatePost.Handle(command, userId, postId);
+            return Ok(result);
         }
 
         [HttpGet("{id}")]

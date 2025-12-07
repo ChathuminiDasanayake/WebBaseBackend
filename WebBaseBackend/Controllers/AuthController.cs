@@ -19,6 +19,8 @@ namespace WebBaseBackend.Controllers
         [HttpPost("Register")]
         public async Task<ActionResult<User>> Register(UserDto request)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
             var user = await authService.RegisterAsync(request);
             if (user is null) {

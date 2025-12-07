@@ -24,6 +24,7 @@ builder.Services.AddScoped<ICommentRepository, CommentService>();
 builder.Services.AddScoped<ILikeRepository, LikeService>();
 
 builder.Services.AddScoped<CreatePostHandler>();
+builder.Services.AddScoped<UpdatePostHandler>();
 builder.Services.AddScoped<AddCommentHandler>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options => 
